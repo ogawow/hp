@@ -1,3 +1,3 @@
 const config = {
-    DIFY_API_KEY: 'YOUR_DIFY_API_KEY_HERE'
+    DIFY_API_KEY: 'app-87IXMf7pXoOw91m20clm6ks9'
 };
