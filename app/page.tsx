@@ -42,7 +42,7 @@ LIFE合同会社へようこそ。弊社はチャットボットが主軸の会�
     setInput('')
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch('https://your-api-url.vercel.app/api/chat', { // Updated fetch URL
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input })
