@@ -25,7 +25,7 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
 
-      - name: Copy custom index.html
+      - name: Copy index.html to root
         run: cp public/index.html out/
 
       - name: Add .nojekyll file
@@ -36,5 +36,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./out
-
 
