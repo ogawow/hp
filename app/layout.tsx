@@ -15,6 +15,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
+      <head>
+        <link
+          rel="icon"
+          href={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/favicon.ico`}
+          sizes="any"
+        />
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   )
