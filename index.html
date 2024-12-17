@@ -4,20 +4,257 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LIFE合同会社 - コーポレートサイト</title>
-    <script>
-        // GitHub Pages用のリダイレクト
-        (function(){
-            var redirect = sessionStorage.redirect;
-            delete sessionStorage.redirect;
-            if (redirect && redirect != location.href) {
-                history.replaceState(null, null, redirect);
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 0;
+        }
+        .card-content {
+            height: 60vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 70%;
+        }
+        .user-message {
+            background-color: #3b82f6;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .assistant-message {
+            background-color: #e5e7eb;
+            color: #1f2937;
+        }
+        .card-footer {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        .quick-replies {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .quick-reply-button {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            border: 1px solid #d1d5db;
+            padding: 10px;
+            text-align: left;
+            cursor: pointer;
+        }
+        .quick-reply-button:hover {
+            background-color: #e5e7eb;
+        }
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 20px;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            margin: 0 4px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        .dot:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+        .dot:nth-child(3) {
+            animation-delay: 1s;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(0.5);
+                opacity: 0.5;
             }
-        })();
-    </script>
+            50% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div id="__next"></div>
-    <script src="/_next/static/chunks/pages/_app.js"></script>
-    <script src="/_next/static/chunks/pages/index.js"></script>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function LoadingDots() {
+            return (
+                <div className="loading-dots">
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [messages, setMessages] = useState([]);
+            const [input, setInput] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+
+            useEffect(() => {
+                const userAgent = window.navigator.userAgent;
+                const deviceType = /Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile/.test(userAgent) ? 'モバイル' : 'デスクトップ';
+                const browserName = getBrowserName(userAgent);
+
+                const initialMessage = `${deviceType}の${browserName}ブラウザでお越しいただき、ありがとうございます！
+LIFE合同会社へようこそ。弊社はチャットボットが主軸の会社ですので、会社HPもチャット形式にしています。
+下記のクイックリプライボタンか、自由にメッセージを入力してください。どのようなことでもお答えいたします！`;
+
+                setMessages([{ role: 'assistant', content: initialMessage }]);
+            }, []);
+
+            const getBrowserName = (userAgent) => {
+                if (userAgent.indexOf("Chrome") > -1) return "Chrome";
+                if (userAgent.indexOf("Safari") > -1) return "Safari";
+                if (userAgent.indexOf("Firefox") > -1) return "Firefox";
+                if (userAgent.indexOf("MSIE") > -1 || userAgent.indexOf("Trident/") > -1) return "Internet Explorer";
+                if (userAgent.indexOf("Edge") > -1) return "Edge";
+                return "不明なブラウザ";
+            };
+
+            const handleSend = async () => {
+                if (input.trim() === '') return;
+
+                setIsLoading(true);
+                setMessages(prev => [...prev, { role: 'user', content: input }]);
+                setInput('');
+
+                try {
+                    // ここでAPIリクエストを行う代わりに、ダミーの応答を返します
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // 1秒の遅延を追加
+                    const dummyResponse = "申し訳ありませんが、現在APIは接続されていません。これはデモ用の応答です。実際のシステムでは、ここでDify APIやその他のチャットボットAPIにリクエストを送信し、応答を受け取ります。";
+                    setMessages(prev => [...prev, { role: 'assistant', content: dummyResponse }]);
+                } catch (error) {
+                    console.error('エラー:', error);
+                    setMessages(prev => [...prev, { 
+                        role: 'assistant', 
+                        content: `エラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}` 
+                    }]);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const quickReplies = [
+                { label: '会社概要', content: '会社概要を教えてください' },
+                { label: 'アクセス', content: 'オフィスへのアクセス方法を教えてください' },
+                { label: '事業内容', content: 'LIFE合同会社の事業内容を教えてください' },
+                { label: 'お問い合わせ', content: 'お問い合わせ方法を教えてください' }
+            ];
+
+            return (
+                <div className="container">
+                    <div className="card">
+                        <div className="card-header">
+                            <h1 className="card-title">LIFE合同会社 コーポレートサイト</h1>
+                        </div>
+                        <div className="card-content">
+                            {messages.map((msg, index) => (
+                                <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'assistant-message'}`}>
+                                    {msg.content}
+                                </div>
+                            ))}
+                            {isLoading && (
+                                <div className="message assistant-message">
+                                    <LoadingDots />
+                                </div>
+                            )}
+                        </div>
+                        <div className="card-footer">
+                            <div className="quick-replies">
+                                {quickReplies.map((reply, index) => (
+                                    <button
+                                        key={index}
+                                        className="quick-reply-button"
+                                        onClick={() => setInput(reply.content)}
+                                    >
+                                        {reply.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="input-group">
+                                <input
+                                    type="text"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    placeholder="メッセージを入力..."
+                                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                                />
+                                <button onClick={handleSend} disabled={isLoading}>
+                                    送信
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
 </body>
 </html>
+
