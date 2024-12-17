@@ -136,3 +136,4 @@ LIFE合同会社へようこそ。弊社はチャットボットが主軸の会�
 }
 
 ReactDOM.render(<App />, document.getElementById('root'));
+
