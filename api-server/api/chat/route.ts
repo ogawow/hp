@@ -4,7 +4,8 @@ export async function POST(req: Request) {
   try {
     const { message } = await req.json()
 
-    if (!process.env.DIFY_API_KEY) {
+    const difyApiKey = process.env.DIFY_API_KEY
+    if (!difyApiKey) {
       throw new Error('DIFY_API_KEYが設定されていません')
     }
 
@@ -13,12 +14,12 @@ export async function POST(req: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DIFY_API_KEY}`
+        'Authorization': `Bearer ${difyApiKey}`
       },
       body: JSON.stringify({
         inputs: {},
-        query: message,  // 'question'ではなく'query'を使用
-        response_mode: 'blocking',  // ブロッキングモードを使用
+        query: message,
+        response_mode: 'blocking',
         conversation_id: '',
         user: 'user'
       })
