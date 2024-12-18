@@ -2,7 +2,7 @@
 
 :root {
     --primary-gradient: linear-gradient(135deg, #1a365d 0%, #2563eb 100%);
-    --card-bg: rgba(255, 255, 255, 0.95);
+    --card-bg: rgba(255, 255, 255, 0.9);
     --message-user: #2563eb;
     --message-bot: rgba(255, 255, 255, 0.9);
 }
@@ -12,7 +12,7 @@ body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    background: var(--primary-gradient);
+    background: #f0f4f8; /* 薄い背景色を追加 */
 }
 
 .container {
@@ -22,11 +22,11 @@ body {
     min-height: 100vh;
     padding: 20px;
     position: relative;
-    z-index: 1;
+    /* z-index: 1; を削除 */
 }
 
 .card {
-    background: var(--card-bg);
+    background: rgba(255, 255, 255, 0.9); /* 透明度を上げる */
     border-radius: 24px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     width: 100%;
