@@ -54,10 +54,6 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
 
         // Initialize background animation
         const canvas = document.createElement('canvas');
-        canvas.style.position = 'fixed';
-        canvas.style.top = '0';
-        canvas.style.left = '0';
-        canvas.style.zIndex = '0';
         document.body.prepend(canvas);
         new WaveBackground(canvas);
     }, []);
