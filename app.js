@@ -1,25 +1,7 @@
 const { useState, useEffect, useRef } = React;
 
-const ninbenInfo = {
-    overview: `ninben.aiは、LINE公式アカウントを通じて高度なAIチャットボットサービスを提供するソリューションです。24時間365日の自動応答、パーソナライズされた商品レコメンド、柔軟なカスタマイズが特徴です。`,
-    features: [
-        "データ収集と効率的な整理",
-        "OpenAIモデルによる高度な学習",
-        "24時間365日の自動応答",
-        "パーソナライズされた商品レコメンド",
-        "柔軟なカスタマイズオプション"
-    ],
-    benefits: [
-        "顧客満足度の向上",
-        "業務効率化による人件費削減",
-        "クロスセル・アップセルによる売上向上"
-    ],
-    pricing: {
-        initial: "初期費用：3,000,000円",
-        monthly: "月額費用：350,000円/月",
-        includes: "システムの導入、設定、カスタマイズ、トレーニング、保守が含まれます"
-    }
-};
+// React 18用のcreateRootを使用
+const root = ReactDOM.createRoot(document.getElementById('root'));
 
 function LoadingDots() {
     return (
@@ -35,7 +17,7 @@ function App() {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [suggestedQuestions, setSuggestedQuestions] = useState([]); // Added state for suggested questions
+    const [suggestedQuestions, setSuggestedQuestions] = useState([]);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -67,25 +49,6 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
         return "不明なブラウザ";
     };
 
-    const getNinbenResponse = (query) => {
-        const lowerQuery = query.toLowerCase();
-        
-        if (lowerQuery.includes('ninben') || lowerQuery.includes('にんべん')) {
-            return ninbenInfo.overview;
-        }
-        if (lowerQuery.includes('機能') || lowerQuery.includes('特徴')) {
-            return `ninben.aiの主な機能は以下の通りです：\n${ninbenInfo.features.join('\n')}`;
-        }
-        if (lowerQuery.includes('料金') || lowerQuery.includes('価格')) {
-            return `ninben.aiの料金プラン：\n${ninbenInfo.pricing.initial}\n${ninbenInfo.pricing.monthly}\n${ninbenInfo.pricing.includes}`;
-        }
-        if (lowerQuery.includes('メリット') || lowerQuery.includes('利点')) {
-            return `ninben.aiの主なメリット：\n${ninbenInfo.benefits.join('\n')}`;
-        }
-        
-        return null;
-    };
-
     const handleSend = async () => {
         if (input.trim() === '') return;
 
@@ -94,17 +57,6 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
         setInput('');
 
         try {
-            // First check for ninben.ai related queries
-            const ninbenResponse = getNinbenResponse(input);
-            if (ninbenResponse) {
-                setTimeout(() => {
-                    setMessages(prev => [...prev, { role: 'assistant', content: ninbenResponse }]);
-                    setIsLoading(false);
-                }, 1000);
-                return;
-            }
-
-            // If not ninben.ai related, proceed with Dify API
             const response = await fetch('https://api.dify.ai/v1/chat-messages', {
                 method: 'POST',
                 headers: {
@@ -125,24 +77,24 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
             }
 
             const data = await response.json();
-            if (!data.answer) {
-                throw new Error('APIからの無効な応答');
-            }
-
-            // Parse the response and format newlines
-            const formattedAnswer = data.answer.replace(/\\n/g, '\n');
-            setMessages(prev => [...prev, { 
-                role: 'assistant', 
-                content: formattedAnswer 
-            }]);
-
-            // Handle suggested questions if they exist
-            if (data.suggested_questions) {
-                setSuggestedQuestions(
-                    Array.isArray(data.suggested_questions) 
-                        ? data.suggested_questions.slice(0, 4)
-                        : []
-                );
+            
+            // レスポンスの解析と処理
+            try {
+                const parsedData = typeof data.answer === 'string' ? JSON.parse(data.answer) : data.answer;
+                setMessages(prev => [...prev, { 
+                    role: 'assistant', 
+                    content: parsedData.answer || parsedData
+                }]);
+                
+                if (parsedData.suggested_questions) {
+                    setSuggestedQuestions(parsedData.suggested_questions.slice(0, 4));
+                }
+            } catch (e) {
+                // JSONとして解析できない場合は、通常のテキストとして扱う
+                setMessages(prev => [...prev, { 
+                    role: 'assistant', 
+                    content: data.answer
+                }]);
             }
         } catch (error) {
             console.error('エラー:', error);
@@ -195,7 +147,7 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
                     </div>
                     {suggestedQuestions.length > 0 && (
                         <div className="suggested-questions">
-                            <p className="text-sm text-gray-500 mb-2">関連する質問：</p>
+                            <p>関連する質問：</p>
                             <div className="grid grid-cols-2 gap-2">
                                 {suggestedQuestions.map((question, index) => (
                                     <button
@@ -203,7 +155,7 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
                                         className="quick-reply-button suggested"
                                         onClick={() => {
                                             setInput(question);
-                                            setSuggestedQuestions([]); // Clear after selection
+                                            setSuggestedQuestions([]);
                                         }}
                                     >
                                         {question}
@@ -230,18 +182,6 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
     );
 }
 
-ReactDOM.render(<App />, document.getElementById('root'));
-
-<style>
-.suggested-questions {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.quick-reply-button.suggested {
-    font-size: 0.9em;
-    padding: 8px 12px;
-}
-</style>
+// React 18のレンダリング方法を使用
+root.render(<App />);
 
