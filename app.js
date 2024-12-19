@@ -35,6 +35,7 @@ function App() {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [suggestedQuestions, setSuggestedQuestions] = useState([]); // Added state for suggested questions
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -129,6 +130,9 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
             }
 
             setMessages(prev => [...prev, { role: 'assistant', content: data.answer }]);
+            if (data.suggested_questions) { // Added to handle suggested questions
+                setSuggestedQuestions(data.suggested_questions.slice(0, 4));
+            }
         } catch (error) {
             console.error('エラー:', error);
             setMessages(prev => [...prev, { 
@@ -141,10 +145,10 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
     };
 
     const quickReplies = [
-        { label: 'ninben.aiとは？', content: 'ninben.aiについて教えてください' },
-        { label: 'サービスの特徴', content: 'ninben.aiの主な機能を教えてください' },
-        { label: '料金プラン', content: 'ninben.aiの料金プランを教えてください' },
-        { label: '導入メリット', content: 'ninben.aiのメリットを教えてください' }
+        { label: '会社情報は？', content: '会社情報を教えてください' },
+        { label: 'アクセスは？', content: 'オフィスへのアクセス方法を教えてください' },
+        { label: '展開しているサービスは？', content: '提供しているサービスについて教えてください' },
+        { label: 'ninben.aiとは？', content: 'ninben.aiについて教えてください' }
     ];
 
     return (
@@ -178,6 +182,22 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
                             </button>
                         ))}
                     </div>
+                    {suggestedQuestions.length > 0 && ( // Added to render suggested questions
+                        <div className="suggested-questions">
+                            <p className="text-sm text-gray-500 mb-2">よくある質問：</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {suggestedQuestions.map((question, index) => (
+                                    <button
+                                        key={index}
+                                        className="quick-reply-button"
+                                        onClick={() => setInput(question)}
+                                    >
+                                        {question}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     <div className="input-group">
                         <input
                             type="text"
