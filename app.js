@@ -129,9 +129,20 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
                 throw new Error('APIからの無効な応答');
             }
 
-            setMessages(prev => [...prev, { role: 'assistant', content: data.answer }]);
-            if (data.suggested_questions) { // Added to handle suggested questions
-                setSuggestedQuestions(data.suggested_questions.slice(0, 4));
+            // Parse the response and format newlines
+            const formattedAnswer = data.answer.replace(/\\n/g, '\n');
+            setMessages(prev => [...prev, { 
+                role: 'assistant', 
+                content: formattedAnswer 
+            }]);
+
+            // Handle suggested questions if they exist
+            if (data.suggested_questions) {
+                setSuggestedQuestions(
+                    Array.isArray(data.suggested_questions) 
+                        ? data.suggested_questions.slice(0, 4)
+                        : []
+                );
             }
         } catch (error) {
             console.error('エラー:', error);
@@ -182,15 +193,18 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
                             </button>
                         ))}
                     </div>
-                    {suggestedQuestions.length > 0 && ( // Added to render suggested questions
+                    {suggestedQuestions.length > 0 && (
                         <div className="suggested-questions">
-                            <p className="text-sm text-gray-500 mb-2">よくある質問：</p>
+                            <p className="text-sm text-gray-500 mb-2">関連する質問：</p>
                             <div className="grid grid-cols-2 gap-2">
                                 {suggestedQuestions.map((question, index) => (
                                     <button
                                         key={index}
-                                        className="quick-reply-button"
-                                        onClick={() => setInput(question)}
+                                        className="quick-reply-button suggested"
+                                        onClick={() => {
+                                            setInput(question);
+                                            setSuggestedQuestions([]); // Clear after selection
+                                        }}
                                     >
                                         {question}
                                     </button>
@@ -217,4 +231,17 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
 }
 
 ReactDOM.render(<App />, document.getElementById('root'));
+
+<style>
+.suggested-questions {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.quick-reply-button.suggested {
+    font-size: 0.9em;
+    padding: 8px 12px;
+}
+</style>
 
