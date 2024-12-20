@@ -3,14 +3,6 @@ const { useState, useEffect, useRef } = React;
 // React 18用のcreateRootを使用
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-// ロゴスタイルの選択肢
-const logoStyles = [
-    { label: 'モダンでシンプル', content: 'モダンでミニマルなデザインのロゴを生成してください。シンプルな線と形状を使用し、現代的な印象を与えるデザインにしてください。' },
-    { label: 'テクノロジー感', content: 'テクノロジーと革新を感じさせるロゴを生成してください。デジタルな要素や幾何学的なパターンを取り入れてください。' },
-    { label: 'プロフェッショナル', content: 'プロフェッショナルで信頼感のあるロゴを生成してください。落ち着いた色使いと洗練された印象を重視してください。' },
-    { label: 'クリエイティブ', content: '創造性とユニークさを表現したロゴを生成してください。アーティスティックな要素を取り入れ、印象的なデザインにしてください。' }
-];
-
 function LoadingDots() {
     return (
         <div className="loading-dots">
@@ -21,31 +13,16 @@ function LoadingDots() {
     );
 }
 
-function LogoGenerator({ isEditMode, setIsEditMode }) {
-    const [currentLogo, setCurrentLogo] = useState(() => {
-        // LocalStorageから保存されているロゴを取得
-        const saved = localStorage.getItem('currentLogo');
-        return saved || '/placeholder.svg';
-    });
+function LogoGenerator({ isUpdating, setIsUpdating }) {
     const [isGenerating, setIsGenerating] = useState(false);
-    const [showStyleOptions, setShowStyleOptions] = useState(false);
+    const [currentLogo, setCurrentLogo] = useState(localStorage.getItem('companyLogo') || '/placeholder.svg');
 
-    // ロゴの更新を監視し、LocalStorageに保存
-    useEffect(() => {
-        localStorage.setItem('currentLogo', currentLogo);
-    }, [currentLogo]);
-
-    // 5秒ごとに他のユーザーの更新をチェック
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const savedLogo = localStorage.getItem('currentLogo');
-            if (savedLogo && savedLogo !== currentLogo) {
-                setCurrentLogo(savedLogo);
-            }
-        }, 5000);
-
-        return () => clearInterval(interval);
-    }, [currentLogo]);
+    const logoStyles = [
+        { label: 'モダンでシンプル', prompt: 'モダンでシンプルな企業ロゴ。ミニマルデザインで信頼感のある印象' },
+        { label: 'テクノロジー', prompt: 'テクノロジー企業らしい革新的なロゴ。AI・デジタルをイメージ' },
+        { label: 'クリエイティブ', prompt: '創造的でアーティスティックなロゴ。独創性のある魅力的なデザイン' },
+        { label: 'プロフェッショナル', prompt: 'プロフェッショナルで堅実な印象のロゴ。信頼性と実績を表現' }
+    ];
 
     const generateLogo = async (prompt) => {
         setIsGenerating(true);
@@ -53,79 +30,69 @@ function LogoGenerator({ isEditMode, setIsEditMode }) {
             const response = await fetch('https://api.dify.ai/v1/files', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer app-2aIprvHz5fjizvDipim6eEod`,
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer app-2aIprvHz5fjizvDipim6eEod`
                 },
                 body: JSON.stringify({
                     text: prompt
                 })
             });
 
-            if (!response.ok) {
-                throw new Error('画像生成に失敗しました');
-            }
-
             const data = await response.json();
-            if (data.files && data.files.length > 0) {
-                setCurrentLogo(data.files[0]);
-                setShowStyleOptions(false);
+            if (data.files && data.files[0]) {
+                const newLogoUrl = data.files[0];
+                setCurrentLogo(newLogoUrl);
+                localStorage.setItem('companyLogo', newLogoUrl);
             }
         } catch (error) {
-            console.error('エラー:', error);
-            alert('ロゴの生成中にエラーが発生しました');
+            console.error('ロゴ生成エラー:', error);
         } finally {
             setIsGenerating(false);
+            setIsUpdating(false);
         }
     };
 
     return (
-        <div className="logo-generator">
+        <div className={`logo-generator ${isUpdating ? 'updating' : ''}`}>
             <div className="logo-container">
-                {isEditMode && (
-                    <div className="edit-mode-indicator">
-                        ロゴ編集モード
-                        <button 
-                            className="close-edit-mode"
-                            onClick={() => setIsEditMode(false)}
-                        >
-                            ✕
-                        </button>
-                    </div>
-                )}
                 <img 
                     src={currentLogo} 
-                    alt="LIFE合同会社ロゴ" 
+                    alt="Company Logo" 
                     className="company-logo"
                 />
-                {isEditMode && (
-                    <div className="logo-controls">
-                        <button 
-                            className="update-logo-btn"
-                            onClick={() => setShowStyleOptions(true)}
-                            disabled={isGenerating}
-                        >
-                            {isGenerating ? 'ロゴを生成中...' : 'ロゴを更新'}
-                        </button>
-                    </div>
+                {!isUpdating && (
+                    <button 
+                        className="update-logo-btn"
+                        onClick={() => setIsUpdating(true)}
+                    >
+                        ロゴを更新
+                    </button>
                 )}
             </div>
-            {showStyleOptions && (
-                <div className="style-options">
-                    <h3>ロゴのスタイルを選択してください：</h3>
-                    <div className="style-buttons">
+            {isUpdating && (
+                <div className="logo-styles">
+                    <p className="text-sm text-gray-500 mb-2">ロゴのスタイルを選択してください：</p>
+                    <div className="grid grid-cols-2 gap-2">
                         {logoStyles.map((style, index) => (
                             <button
                                 key={index}
-                                onClick={() => generateLogo(style.content)}
+                                className="quick-reply-button"
+                                onClick={() => generateLogo(style.prompt)}
                                 disabled={isGenerating}
-                                className="style-button"
                             >
                                 {style.label}
                             </button>
                         ))}
                     </div>
+                    <button 
+                        className="cancel-btn"
+                        onClick={() => setIsUpdating(false)}
+                    >
+                        キャンセル
+                    </button>
                 </div>
             )}
+            {isGenerating && <LoadingDots />}
         </div>
     );
 }
@@ -135,7 +102,7 @@ function App() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [suggestedQuestions, setSuggestedQuestions] = useState([]);
-    const [isEditMode, setIsEditMode] = useState(false);
+    const [isUpdatingLogo, setIsUpdatingLogo] = useState(false);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -236,15 +203,10 @@ ninben.aiについて、または他の情報について、お気軽にお尋�
         <div className="container">
             <div className="card">
                 <div className="card-header">
-                    <div className="header-controls">
-                        <button 
-                            className={`edit-mode-toggle ${isEditMode ? 'active' : ''}`}
-                            onClick={() => setIsEditMode(!isEditMode)}
-                        >
-                            {isEditMode ? 'ロゴ編集を終了' : 'ロゴを編集'}
-                        </button>
-                    </div>
-                    <LogoGenerator isEditMode={isEditMode} setIsEditMode={setIsEditMode} />
+                    <LogoGenerator 
+                        isUpdating={isUpdatingLogo}
+                        setIsUpdating={setIsUpdatingLogo}
+                    />
                     <h1 className="card-title">LIFE合同会社 コーポレートサイト</h1>
                 </div>
                 <div className="card-content">
