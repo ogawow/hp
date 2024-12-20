@@ -16,6 +16,7 @@ function LoadingDots() {
 function LogoGenerator({ isUpdating, setIsUpdating }) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentLogo, setCurrentLogo] = useState(localStorage.getItem('companyLogo') || '/placeholder.svg');
+    const [error, setError] = useState(null);
 
     const logoStyles = [
         { label: 'モダンでシンプル', prompt: 'モダンでシンプルな企業ロゴ。ミニマルデザインで信頼感のある印象' },
@@ -26,26 +27,41 @@ function LogoGenerator({ isUpdating, setIsUpdating }) {
 
     const generateLogo = async (prompt) => {
         setIsGenerating(true);
+        setError(null);
+        
         try {
-            const response = await fetch('https://api.dify.ai/v1/files', {
+            const response = await fetch('https://api.dify.ai/v1/workflows/run', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer app-2aIprvHz5fjizvDipim6eEod`
+                    'Authorization': 'Bearer app-2aIprvHz5fjizvDipim6eEod',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    text: prompt
+                    inputs: {
+                        text: prompt
+                    },
+                    response_mode: "blocking",
+                    user: "logo-generator-" + Date.now()
                 })
             });
 
+            if (!response.ok) {
+                throw new Error('ロゴ生成に失敗しました');
+            }
+
             const data = await response.json();
-            if (data.files && data.files[0]) {
-                const newLogoUrl = data.files[0];
+        
+            // Workflow APIのレスポンス形式に合わせて処理
+            if (data.data && data.data.outputs && data.data.outputs.files && data.data.outputs.files.length > 0) {
+                const newLogoUrl = data.data.outputs.files[0];
                 setCurrentLogo(newLogoUrl);
                 localStorage.setItem('companyLogo', newLogoUrl);
+            } else {
+                throw new Error('ロゴの生成結果が見つかりません');
             }
         } catch (error) {
             console.error('ロゴ生成エラー:', error);
+            setError(error.message);
         } finally {
             setIsGenerating(false);
             setIsUpdating(false);
@@ -86,13 +102,21 @@ function LogoGenerator({ isUpdating, setIsUpdating }) {
                     </div>
                     <button 
                         className="cancel-btn"
-                        onClick={() => setIsUpdating(false)}
+                        onClick={() => {
+                            setIsUpdating(false);
+                            setError(null);
+                        }}
                     >
                         キャンセル
                     </button>
                 </div>
             )}
             {isGenerating && <LoadingDots />}
+            {error && (
+                <div className="error-message">
+                    {error}
+                </div>
+            )}
         </div>
     );
 }
