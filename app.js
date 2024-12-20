@@ -30,37 +30,48 @@ function LogoGenerator({ isUpdating, setIsUpdating }) {
         setError(null);
         
         try {
+            console.log('Sending request to Dify API with prompt:', prompt);
+
+            const requestBody = {
+                inputs: {
+                    text: prompt
+                },
+                response_mode: "blocking",
+                user: "logo-generator-" + Date.now()
+            };
+
+            console.log('Request body:', requestBody);
+
             const response = await fetch('https://api.dify.ai/v1/workflows/run', {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer app-2aIprvHz5fjizvDipim6eEod',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    inputs: {
-                        text: prompt
-                    },
-                    response_mode: "blocking",
-                    user: "logo-generator-" + Date.now()
-                })
+                body: JSON.stringify(requestBody)
             });
 
+            console.log('Response status:', response.status);
+            const responseData = await response.json();
+            console.log('Response data:', responseData);
+
             if (!response.ok) {
-                throw new Error('ロゴ生成に失敗しました');
+                throw new Error(responseData.error || 'ロゴ生成に失敗しました');
             }
 
-            const data = await response.json();
-        
-            // Workflow APIのレスポンス形式に合わせて処理
-            if (data.data && data.data.outputs && data.data.outputs.files && data.data.outputs.files.length > 0) {
-                const newLogoUrl = data.data.outputs.files[0];
+            // ワークフローAPIのレスポンス形式に従って処理
+            if (responseData.data?.outputs?.files) {
+                const newLogoUrl = responseData.data.outputs.files;
+                console.log('Generated logo URL:', newLogoUrl);
                 setCurrentLogo(newLogoUrl);
                 localStorage.setItem('companyLogo', newLogoUrl);
             } else {
+                console.error('Unexpected response format:', responseData);
                 throw new Error('ロゴの生成結果が見つかりません');
             }
         } catch (error) {
-            console.error('ロゴ生成エラー:', error);
+            console.error('Logo generation error:', error);
             setError(error.message);
         } finally {
             setIsGenerating(false);
