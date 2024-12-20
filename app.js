@@ -68,21 +68,13 @@ function LogoGenerator({ isUpdating, setIsUpdating }) {
                 const imageFile = responseData.data.outputs.files[0];
                 console.log('Generated logo file:', imageFile);
 
-                // Base64データをBlobに変換
-                const byteCharacters = atob(imageFile.content);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                if (imageFile.url) {
+                    console.log('Generated logo URL:', imageFile.url);
+                    setCurrentLogo(imageFile.url);
+                    localStorage.setItem('companyLogo', imageFile.url);
+                } else {
+                    throw new Error('画像URLが見つかりません');
                 }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], {type: imageFile.type});
-
-                // BlobからURLを作成
-                const imageUrl = URL.createObjectURL(blob);
-                setCurrentLogo(imageUrl);
-
-                // Base64文字列をlocalStorageに保存
-                localStorage.setItem('companyLogo', `data:${imageFile.type};base64,${imageFile.content}`);
             } else {
                 console.error('Unexpected response format:', responseData);
                 throw new Error('ロゴの生成結果が見つかりません');
@@ -96,14 +88,7 @@ function LogoGenerator({ isUpdating, setIsUpdating }) {
         }
     };
 
-    useEffect(() => {
-        // コンポーネントがアンマウントされる時にBlobURLを解放
-        return () => {
-            if (currentLogo.startsWith('blob:')) {
-                URL.revokeObjectURL(currentLogo);
-            }
-        };
-    }, [currentLogo]);
+    // useEffect hook removed here
 
     return (
         <div className={`logo-generator ${isUpdating ? 'updating' : ''}`}>
