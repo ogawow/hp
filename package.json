@@ -1,9 +1,0 @@
-{
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build && next export && cp out/404/index.html out/404.html",
-    "start": "next start",
-    "lint": "next lint"
-  }
-}
-
